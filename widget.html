@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; padding: 20px; background: #f4f6f9; }
+h2 { color: #1F4E79; margin-bottom: 15px; font-size: 18px; border-bottom: 3px solid #1F4E79; padding-bottom: 8px; }
+.section { background: white; border-radius: 8px; padding: 20px; margin-bottom: 30px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { background: #1F4E79; color: white; padding: 10px 12px; text-align: left; }
+td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+tr:hover td { background: #f0f4ff; }
+.total-row td { font-weight: bold; background: #E8F0FE; border-top: 2px solid #1F4E79; }
+.hold { color: #cc0000; font-weight: bold; }
+.pending { color: #007700; }
+.loading { color: #888; font-style: italic; padding: 20px; }
+.error { color: red; padding: 20px; }
+</style>
+</head>
+<body>
+<div class="section">
+  <h2>CLC Internal Commissions</h2>
+  <table>
+    <thead><tr><th>Agent</th><th>Protect</th><th>Build</th><th>Total Members</th><th>Total Commission</th><th>Status</th></tr></thead>
+    <tbody id="clcBody"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+  </table>
+</div>
+<div class="section">
+  <h2>External Partner Commissions</h2>
+  <table>
+    <thead><tr><th>Partner</th><th>Type</th><th>Protect</th><th>Build</th><th>Total Members</th><th>Total Commission</th><th>Status</th></tr></thead>
+    <tbody id="extBody"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
+  </table>
+</div>
+<script src="https://js.zohostatic.com/creator/v2/zoho-creator.js"></script>
+<script>
+function parseNotes(notes) {
+  var p = 0, b = 0;
+  if (!notes) return { protect: 0, build: 0 };
+  try {
+    var parts = notes.split("|");
+    if (parts[0]) p = parseInt(parts[0].replace("Protect:", "").trim()) || 0;
+    if (parts[1]) b = parseInt(parts[1].replace("Build:", "").trim()) || 0;
+  } catch(e) {}
+  return { protect: p, build: b };
+}
+function fmt(val) {
+  return "$" + parseFloat(val || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+function buildTable(owners, bodyId, cols) {
+  var body = document.getElementById(bodyId);
+  body.innerHTML = "";
+  var keys = Object.keys(owners).sort();
+  if (!keys.length) { body.innerHTML = "<tr><td colspan='" + cols + "' class='loading'>No data.</td></tr>"; return; }
+  var gTotal = 0, gP = 0, gB = 0;
+  keys.forEach(function(owner) {
+    var d = owners[owner];
+    var tm = d.protect + d.build;
+    gTotal += d.total; gP += d.protect; gB += d.build;
+    var sc = d.status === "Hold" ? "hold" : "pending";
+    var row = "<tr><td>" + owner + "</td>";
+    if (d.type !== undefined) row += "<td>" + d.type + "</td>";
+    row += "<td>" + d.protect + "</td><td>" + d.build + "</td><td>" + tm + "</td><td>" + fmt(d.total) + "</td><td class='" + sc + "'>" + d.status + "</td></tr>";
+    body.innerHTML += row;
+  });
+  var tr = "<tr class='total-row'><td>TOTAL</td>";
+  if (cols === 7) tr += "<td></td>";
+  tr += "<td>" + gP + "</td><td>" + gB + "</td><td>" + (gP + gB) + "</td><td>" + fmt(gTotal) + "</td><td></td></tr>";
+  body.innerHTML += tr;
+}
+ZOHO.CREATOR.init().then(function() {
+  ZOHO.CREATOR.DATA.getRecords({
+    appName: "credit-armor-commissions",
+    reportName: "Commissions_Report",
+    page: 1,
+    pageSize: 200
+  }).then(function(response) {
+    var records = response.data || [];
+    var clcTypes = ["Employee", "House", "CoBrand"];
+    var extTypes = ["Affiliate", "SCORE CRO", "RE/ACT"];
+    var clc = {}, ext = {};
+    records.forEach(function(rec) {
+      var owner = rec.Owner || "";
+      var type = rec.Partner_Type || "";
+      var notes = parseNotes(rec.Notes);
+      var commission = parseFloat(rec.Total_Commission) || 0;
+      var status = rec.Status || "Pending";
+      if (clcTypes.indexOf(type) >= 0) {
+        if (!clc[owner]) clc[owner] = { protect: 0, build: 0, total: 0, status: status };
+        clc[owner].protect += notes.protect;
+        clc[owner].build += notes.build;
+        clc[owner].total += commission;
+        if (status === "Hold") clc[owner].status = "Hold";
+      } else if (extTypes.indexOf(type) >= 0) {
+        if (!ext[owner]) ext[owner] = { protect: 0, build: 0, total: 0, type: type, status: status };
+        ext[owner].protect += notes.protect;
+        ext[owner].build += notes.build;
+        ext[owner].total += commission;
+        if (status === "Hold") ext[owner].status = "Hold";
+      }
+    });
+    buildTable(clc, "clcBody", 6);
+    buildTable(ext, "extBody", 7);
+  }).catch(function(err) {
+    document.getElementById("clcBody").innerHTML = "<tr><td colspan='6' class='error'>Error: " + JSON.stringify(err) + "</td></tr>";
+    document.getElementById("extBody").innerHTML = "<tr><td colspan='7' class='error'>Error: " + JSON.stringify(err) + "</td></tr>";
+  });
+});
+</script>
+</body>
+</html>
