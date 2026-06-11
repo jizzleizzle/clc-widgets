@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLC Sales Consultation Trainer</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f7; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 1rem; }
+.sim { width: 100%; max-width: 680px; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 32px rgba(0,0,0,0.12); margin: auto; }
+.scene-bg { width: 100%; height: 180px; position: relative; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; }
+.scene-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+.scene-overlay { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: linear-gradient(to top, #fff, transparent); }
+.stage-pill { position: absolute; top: 12px; left: 16px; background: rgba(0,0,0,0.55); color: #fff; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+.score-pill { position: absolute; top: 12px; right: 16px; background: rgba(29,158,117,0.9); color: #fff; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+.progress-bar { display: flex; gap: 3px; padding: 0 16px; background: #fff; padding-top: 6px; }
+.progress-step { flex: 1; height: 3px; border-radius: 2px; background: #e5e5e7; transition: background 0.4s; }
+.progress-step.done { background: #1D9E75; }
+.progress-step.active { background: #185FA5; }
+.content-area { padding: 1rem 1.25rem 1.25rem; background: #fff; }
+.character-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 1rem; }
+.avatar { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 2px solid #e5e5e7; background: #f5f5f7; overflow: hidden; }
+.bubble-wrap { flex: 1; }
+.speaker-name { font-size: 11px; color: #888; margin-bottom: 4px; letter-spacing: 0.03em; }
+.bubble { background: #f5f5f7; border-radius: 0 12px 12px 12px; padding: 0.75rem 1rem; font-size: 14px; line-height: 1.6; color: #1a1a1a; border: 0.5px solid #e5e5e7; }
+.prompt { font-size: 13px; color: #666; font-style: italic; margin-bottom: 0.75rem; padding-left: 4px; }
+.choices { display: flex; flex-direction: column; gap: 6px; margin-bottom: 0.875rem; }
+.choice-btn { background: #fff; border: 1px solid #d1d1d6; border-radius: 10px; padding: 0.75rem 1rem; font-size: 13px; color: #1a1a1a; text-align: left; cursor: pointer; line-height: 1.5; transition: border-color 0.15s, background 0.15s; display: flex; align-items: flex-start; gap: 10px; font-family: inherit; }
+.choice-btn:hover:not(:disabled) { background: #f5f5f7; border-color: #aaa; }
+.choice-btn:disabled { cursor: default; }
+.choice-letter { width: 22px; height: 22px; border-radius: 50%; background: #f0f0f5; color: #666; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; border: 1px solid #e0e0e5; }
+.choice-btn.correct { border-color: #1D9E75; background: #E1F5EE; color: #085041; }
+.choice-btn.correct .choice-letter { background: #1D9E75; color: #fff; border-color: #1D9E75; }
+.choice-btn.wrong { border-color: #E24B4A; background: #FCEBEB; color: #501313; }
+.choice-btn.wrong .choice-letter { background: #E24B4A; color: #fff; border-color: #E24B4A; }
+.feedback { border-radius: 10px; padding: 0.75rem 1rem; font-size: 13px; line-height: 1.6; margin-bottom: 0.875rem; display: flex; gap: 10px; align-items: flex-start; }
+.feedback.good { background: #E1F5EE; color: #085041; border: 1px solid #5DCAA5; }
+.feedback.bad { background: #FCEBEB; color: #501313; border: 1px solid #F09595; }
+.feedback-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; font-weight: 700; }
+.next-btn { background: #1D9E75; color: #fff; border: none; border-radius: 10px; padding: 0.6rem 1.5rem; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; font-family: inherit; }
+.next-btn:hover { opacity: 0.88; }
+.results-wrap { padding: 1.5rem 1.25rem; background: #fff; }
+.results-header { text-align: center; margin-bottom: 1.25rem; }
+.results-score-big { font-size: 56px; font-weight: 700; color: #1a1a1a; line-height: 1; }
+.results-grade { font-size: 16px; font-weight: 600; margin-top: 6px; margin-bottom: 6px; }
+.results-msg { font-size: 13px; color: #666; line-height: 1.6; }
+.stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 1.25rem 0; }
+.stat-box { background: #f5f5f7; border-radius: 10px; padding: 0.875rem; text-align: center; }
+.stat-n { font-size: 26px; font-weight: 700; color: #1a1a1a; }
+.stat-l { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+.btn-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
+.btn-outline { background: #fff; border: 1px solid #d1d1d6; border-radius: 10px; padding: 0.6rem 1.5rem; font-size: 13px; color: #1a1a1a; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+.btn-outline:hover { background: #f5f5f7; }
+.clc-header { background: #0d1b2a; padding: 1rem 1.25rem 0.875rem; display: flex; align-items: center; gap: 12px; }
+.clc-logo-text { color: #fff; font-size: 15px; font-weight: 700; letter-spacing: 0.02em; }
+.clc-logo-sub { color: #1D9E75; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 1px; }
+.clc-badge { background: #1D9E75; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; letter-spacing: 0.05em; margin-left: auto; }
+</style>
+</head>
+<body>
+<div class="sim" id="sim">
+  <div class="clc-header">
+    <div>
+      <div class="clc-logo-text">Credit Law Center</div>
+      <div class="clc-logo-sub">Sales Training Simulator</div>
+    </div>
+    <div class="clc-badge">INTERACTIVE</div>
+  </div>
+  <div id="app"></div>
+</div>
+<script>
+const SCENES = [
+  { svgScene: `<rect width="100%" height="100%" fill="#1a1a2e"/><circle cx="50%" cy="110%" r="280" fill="#16213e" opacity="0.8"/><rect x="60%" y="20" width="120" height="80" rx="8" fill="#0f3460" opacity="0.6"/><rect x="62%" y="24" width="116" height="72" rx="6" fill="#1a1a2e" opacity="0.5"/><rect x="64%" y="28" width="112" height="16" rx="3" fill="#e94560" opacity="0.3"/><circle cx="15%" cy="40%" r="60" fill="#0f3460" opacity="0.4"/><circle cx="12%" cy="40%" r="20" fill="#e94560" opacity="0.15"/><line x1="0" y1="140" x2="100%" y2="140" stroke="#e94560" stroke-width="0.5" opacity="0.3"/><text x="50%" y="85" text-anchor="middle" fill="#e94560" font-size="11" opacity="0.7" font-family="sans-serif" letter-spacing="3">INCOMING CALL</text>` },
+  { svgScene: `<rect width="100%" height="100%" fill="#0d1b2a"/><rect x="10%" y="15" width="80%" height="120" rx="8" fill="#023e8a" opacity="0.35"/><rect x="12%" y="20" width="76%" height="20" rx="4" fill="#0077b6" opacity="0.4"/><rect x="12%" y="46" width="25%" height="70" rx="4" fill="#023e8a" opacity="0.5"/><rect x="40%" y="46" width="48%" height="30" rx="4" fill="#0096c7" opacity="0.2"/><rect x="40%" y="82" width="48%" height="12" rx="2" fill="#00b4d8" opacity="0.15"/><rect x="40%" y="100" width="35%" height="12" rx="2" fill="#00b4d8" opacity="0.1"/><text x="14%" y="36" fill="#90e0ef" font-size="9" font-family="sans-serif" opacity="0.8">CREDIT ARMOR REPORT</text><text x="14%" y="66" fill="#48cae4" font-size="22" font-weight="bold" font-family="sans-serif" opacity="0.9">647</text><text x="14%" y="78" fill="#90e0ef" font-size="8" font-family="sans-serif" opacity="0.6">CURRENT SCORE</text>` },
+  { svgScene: `<rect width="100%" height="100%" fill="#1b1b2f"/><rect x="5%" y="10" width="90%" height="140" rx="6" fill="#2d2d44" opacity="0.5"/><rect x="7%" y="18" width="86%" height="18" rx="3" fill="#f0a500" opacity="0.25"/><rect x="7%" y="42" width="40%" height="10" rx="2" fill="#ffffff" opacity="0.08"/><rect x="7%" y="58" width="55%" height="10" rx="2" fill="#ffffff" opacity="0.06"/><rect x="7%" y="74" width="35%" height="10" rx="2" fill="#f0a500" opacity="0.12"/><rect x="7%" y="90" width="50%" height="10" rx="2" fill="#ffffff" opacity="0.06"/><rect x="7%" y="106" width="45%" height="10" rx="2" fill="#f0a500" opacity="0.1"/><text x="50%" y="30" text-anchor="middle" fill="#f0a500" font-size="10" font-family="sans-serif" opacity="0.8" letter-spacing="2">NEGATIVE ACCOUNTS</text><circle cx="88%" cy="75" r="22" fill="#f0a500" opacity="0.15"/><text x="88%" y="71" text-anchor="middle" fill="#f0a500" font-size="9" font-family="sans-serif" opacity="0.9">DELETED</text><text x="88%" y="83" text-anchor="middle" fill="#f0a500" font-size="9" font-family="sans-serif" opacity="0.9">UPDATED</text>` },
+  { svgScene: `<rect width="100%" height="100%" fill="#111"/><rect x="20%" y="10" width="60%" height="140" rx="10" fill="#1a1a1a" stroke="#39d353" stroke-width="0.5" opacity="0.8"/><text x="50%" y="35" text-anchor="middle" fill="#39d353" font-size="12" font-family="monospace" opacity="0.9">CONTRACT PRICING</text><line x1="22%" y1="44" x2="78%" y2="44" stroke="#39d353" stroke-width="0.3" opacity="0.5"/><text x="24%" y="62" fill="#39d353" font-size="10" font-family="monospace" opacity="0.7">COLLECTIONS x3  $65ea</text><text x="24%" y="78" fill="#39d353" font-size="10" font-family="monospace" opacity="0.7">PUBLIC REC  x1  $120ea</text><line x1="22%" y1="86" x2="78%" y2="86" stroke="#39d353" stroke-width="0.3" opacity="0.5"/><text x="24%" y="102" fill="#39d353" font-size="12" font-family="monospace" font-weight="bold" opacity="0.95">TOTAL:   $1,140</text><text x="24%" y="120" fill="#39d353" font-size="12" font-family="monospace" font-weight="bold" opacity="0.95">CAPPED:  $995</text>` },
+  { svgScene: `<rect width="100%" height="100%" fill="#1c1c1e"/><rect x="15%" y="8" width="70%" height="145" rx="6" fill="#2c2c2e" opacity="0.7"/><rect x="17%" y="16" width="66%" height="12" rx="2" fill="#a78bfa" opacity="0.2"/><rect x="17%" y="34" width="50%" height="6" rx="1" fill="#ffffff" opacity="0.07"/><rect x="17%" y="46" width="60%" height="6" rx="1" fill="#ffffff" opacity="0.05"/><rect x="17%" y="58" width="44%" height="6" rx="1" fill="#ffffff" opacity="0.07"/><rect x="17%" y="70" width="55%" height="6" rx="1" fill="#ffffff" opacity="0.05"/><rect x="17%" y="88" width="45%" height="2" rx="1" fill="#a78bfa" opacity="0.4"/><text x="50%" y="27" text-anchor="middle" fill="#a78bfa" font-size="9" font-family="sans-serif" letter-spacing="2" opacity="0.9">CREDIT REPAIR AGREEMENT</text><text x="20%" y="102" fill="#a78bfa" font-size="9" font-family="sans-serif" opacity="0.7">CLIENT SIGNATURE</text><path d="M110 118 Q130 108 150 115 Q170 122 190 112" stroke="#a78bfa" stroke-width="1.5" fill="none" opacity="0.6"/>` },
+  { svgScene: `<rect width="100%" height="100%" fill="#0d1117"/><circle cx="50%" cy="50%" r="200" fill="#ff6b6b" opacity="0.04"/><rect x="30%" y="20" width="40%" height="120" rx="30" fill="#161b22" stroke="#ff6b6b" stroke-width="0.5" opacity="0.7"/><circle cx="50%" cy="55" r="18" fill="#ff6b6b" opacity="0.2"/><text x="50%" y="45" text-anchor="middle" fill="#ff6b6b" font-size="9" font-family="sans-serif" letter-spacing="2" opacity="0.8">DEBT COLLECTOR</text><text x="50%" y="62" text-anchor="middle" fill="#ff6b6b" font-size="22" font-family="sans-serif" opacity="0.6">!</text><rect x="38%" y="82" width="24%" height="6" rx="3" fill="#ff6b6b" opacity="0.2"/><rect x="42%" y="94" width="16%" height="6" rx="3" fill="#ff6b6b" opacity="0.15"/><circle cx="50%" cy="120" r="10" fill="#ff6b6b" opacity="0.3"/>` }
+];
+
+const stages = [
+  {
+    label:"Opening", sceneIdx:0,
+    context:"Maria calls in — referred by a friend, wants to buy a house within a year.",
+    prospect:"\"Hi — I got your number from a friend. I'm trying to buy a house in the next year but my credit is a mess. I don't even know where to start.\"",
+    prompt:"How do you open the conversation?",
+    choices:[
+      {text:"\"You're in the right place — we help people just like you every day. Can I ask, what's the main thing holding you back right now?\"",correct:true},
+      {text:"\"Great! Let me pull up our pricing and we can get you started right away.\"",correct:false},
+      {text:"\"Let's just get you signed up for Credit Armor — it's only a dollar and I can pull your report.\"",correct:false},
+      {text:"\"We're a law firm that only charges for items we actually get deleted. Very different from other companies.\"",correct:false}
+    ],
+    good:"You built rapport and got her 'why' — buying a house is now your anchor for the whole consultation. Leading with pricing or the product before understanding her goal is the most common early mistake new reps make.",
+    bad:"Before pitching anything, you need their 'why.' Jumping to pricing or Credit Armor before building rapport almost always loses the client. Get them talking about their goal first."
+  },
+  {
+    label:"Credit Armor signup", sceneIdx:1,
+    context:"Rapport built. Maria is ready. You've explained Credit Armor.",
+    prospect:"\"So it's really just a dollar today? What happens after the trial?\"",
+    prompt:"How do you explain the cost structure?",
+    choices:[
+      {text:"\"Yes — just a dollar today for a 7-day trial. After that it's $24.99/month. If you move forward with repair you keep it active, but if you don't, you can cancel anytime and you're only out the dollar. Does that make sense?\"",correct:true},
+      {text:"\"Just a dollar — don't worry about the rest, let's just get the report pulled first.\"",correct:false},
+      {text:"\"It auto-bills after 7 days but most people keep it because it's such a great tool.\"",correct:false},
+      {text:"\"$24.99 a month but we'll credit it toward your contract if you sign today.\"",correct:false}
+    ],
+    good:"Full transparency about billing builds trust and prevents chargebacks. You gave the complete picture and ended with a confirmation. The 'only out the dollar' close is a proven objection softener.",
+    bad:"Incomplete billing explanations create problems later. Always give the full picture — trial period, ongoing cost, and the easy out. Then confirm understanding before moving forward."
+  },
+  {
+    label:"Collections objection", sceneIdx:2,
+    context:"Report review. Maria has 3 medical collections and 1 credit card collection.",
+    prospect:"\"Can't I just pay these off myself and be done with it? Wouldn't that fix my credit?\"",
+    prompt:"How do you handle this?",
+    choices:[
+      {text:"\"Actually, paying a collection doesn't remove it — it updates the date of last activity to today, which resets the damage. Think of bad credit like a teeter totter: it starts doing maximum damage, and time slowly moves it toward the center. Paying moves it back to the far end. Deleting it is the only real fix.\"",correct:true},
+      {text:"\"You could, but it's better to let us handle it professionally.\"",correct:false},
+      {text:"\"Paying it off will help your score a little, but not as much as what we can do.\"",correct:false},
+      {text:"\"Never pay collections while you're in credit repair — it can seriously hurt your case.\"",correct:false}
+    ],
+    good:"The teeter totter analogy is one of your most powerful tools. It makes an abstract concept concrete, explains why paying is counterproductive, and positions deletion as the only real solution. Use it every time.",
+    bad:"This is a critical teaching moment. Maria genuinely believes paying = fixing. Without the teeter totter explanation, she may pay the collections herself and hurt her score. Always give the full analogy."
+  },
+  {
+    label:"The process", sceneIdx:2,
+    context:"Explaining how the collections challenge process works.",
+    prospect:"\"So what actually happens after you send those letters? What are the possible outcomes?\"",
+    prompt:"Walk her through the collections process.",
+    choices:[
+      {text:"\"The bureaus can only respond three ways: Deleted, Updated, or Verified. Deleted — great, we move on. If verified or updated, we send a Debt Validation Demand letter to the collector. We audit their response against your report for discrepancies — which are usually legal violations. We use those as leverage to negotiate deletion. If that doesn't work, our attorneys take over.\"",correct:true},
+      {text:"\"We challenge the accounts and most of the time they get deleted. It's a pretty straightforward process.\"",correct:false},
+      {text:"\"We send letters to the bureaus and the creditors and they have to respond within 30 days.\"",correct:false},
+      {text:"\"Our attorneys file lawsuits against the collectors which forces them to delete the accounts.\"",correct:false}
+    ],
+    good:"You hit all three phases: bureau challenge → Debt Validation Demand → attorney escalation. Knowing the full process gives clients confidence and sets accurate expectations. The three possible bureau responses are a key detail clients remember.",
+    bad:"The three-phase process is your proof of differentiation. Bureau challenge → Debt Validation Demand → attorney escalation. Clients who understand this process are far less likely to cancel when things move slowly."
+  },
+  {
+    label:"Pricing", sceneIdx:3,
+    context:"4 collections, 1 public record. Calculated total: $1,140.",
+    prospect:"\"Wow — that's a lot more than I expected. I'm not sure I can do that.\"",
+    prompt:"Handle the pricing objection.",
+    choices:[
+      {text:"\"I hear you — and that's exactly why I'm going to cap your contract at $995. You came to us through a referral, so I'm able to apply that discount today. And remember — you only pay for items we actually get deleted. $995 is the absolute max you'd ever pay us.\"",correct:true},
+      {text:"\"I can bring it down to $800 if you sign today — I have some flexibility.\"",correct:false},
+      {text:"\"Yeah, credit repair isn't cheap, but you're investing in your future.\"",correct:false},
+      {text:"\"Don't focus on that number — let's just get started and see how it goes.\"",correct:false}
+    ],
+    good:"Three things made that work: a capped number, a specific reason for the discount, and a reminder they only pay for results. Discounts without a reason sound shady. Always justify the discount — it actually increases its perceived value.",
+    bad:"Pricing objections need three things: a capped number, a reason for the discount, and a reminder they only pay for results. Random discounts without justification undermine trust and close rates."
+  },
+  {
+    label:"Contracting", sceneIdx:4,
+    context:"Maria agreed to move forward. Explaining contract terms.",
+    prospect:"\"I get paid every two weeks and I honestly can't do the $200 retainer AND the ScoreBoost payment in the same week.\"",
+    prompt:"How do you handle this scheduling conflict?",
+    choices:[
+      {text:"\"No problem at all — how often do you get paid? Let's move the retainer date to your next payday so you can comfortably do both.\"",correct:true},
+      {text:"\"When do you get paid next? I can push the retainer to that date.\"",correct:false},
+      {text:"\"We can waive the retainer to keep things simple if that helps.\"",correct:false},
+      {text:"\"Let's hold off on ScoreBoost for now and just focus on getting the contract signed.\"",correct:false}
+    ],
+    good:"Key phrasing: 'how often do you get paid' — not 'when.' How often surfaces the pay cycle naturally. When feels intrusive. You kept both the retainer and ScoreBoost intact — never sacrifice one for the other.",
+    bad:"The phrasing 'how often do you get paid' is intentional — it surfaces the pay cycle without feeling invasive. 'When do you get paid' sounds intrusive. Always align the retainer to their natural pay rhythm without dropping ScoreBoost."
+  },
+  {
+    label:"FDCPA violation", sceneIdx:5,
+    context:"Maria calls back two days after signing. She's panicking.",
+    prospect:"\"A debt collector just called me and said if I don't pay by Friday they're going to sue me. I'm really scared — what do I do?\"",
+    prompt:"What's the correct response?",
+    choices:[
+      {text:"\"Don't panic — they just contacted a represented party, which is an FDCPA violation. Document everything: date, time, their number, exactly what they said. Send us that log immediately. This could actually put money in your pocket — violations are worth up to $1,000. I'm transferring you to our legal line at 816-272-8856 right now.\"",correct:true},
+      {text:"\"Call them back and tell them you're working with a law firm now.\"",correct:false},
+      {text:"\"Ignore it — collectors make threats like that all the time, it's usually empty.\"",correct:false},
+      {text:"\"Don't pay anything and don't answer their calls going forward.\"",correct:false}
+    ],
+    good:"Perfect. You identified the FDCPA violation, turned fear into a financial opportunity, gave clear documentation instructions, and escalated to legal correctly. This response builds enormous client trust and generates real legal claims for the firm.",
+    bad:"A represented client being contacted by a collector is a clear FDCPA violation worth up to $1,000. Document it, explain the opportunity, and get them to the legal line at 816-272-8856. This is a value-generating moment — treat it that way."
+  },
+  {
+    label:"Overcoming concern — cost", sceneIdx:3,
+    context:"A new prospect heard the price before seeing the report. They're hesitant.",
+    prospect:"\"I've heard credit repair can cost thousands. I don't want to pay a bunch of money and not see results.\"",
+    prompt:"Handle this concern before you've pulled the report.",
+    choices:[
+      {text:"\"Completely understand. Here's how we're different: we work on contingency — you only pay for results, when we get something removed. We're a law firm, so we do ask for a retainer to start, which is applied to your first invoice. Any unused portion comes back to you. My consultation is free — the only cost today is $1 to pull your credit report.\"",correct:true},
+      {text:"\"Our pricing is very competitive — most companies charge a flat monthly fee regardless of results.\"",correct:false},
+      {text:"\"Let me pull your report first and then we can talk about pricing once we see what we're working with.\"",correct:false},
+      {text:"\"We have a cap on contracts so you'll never pay more than a certain amount.\"",correct:false}
+    ],
+    good:"You addressed the fear directly with the contingency model, explained the retainer honestly, and removed the barrier to the next step by making the consultation free. Never dodge pricing concerns — address them head-on with the pay-for-performance model.",
+    bad:"Deflecting pricing concerns loses the prospect. The contingency model is your strongest differentiator — lead with it. You only pay for results is more powerful than any comparison to competitors."
+  }
+];
+
+let current=0, score=0, answered=false, selectedIdx=null;
+const PROSPECT={name:"Maria S.",color:"#7c3aed"};
+
+function getCorrect(s){return s.choices.findIndex(c=>c.correct);}
+
+function render(){
+  const app=document.getElementById('app');
+  if(current>=stages.length){renderResults(app);return;}
+  const s=stages[current];
+  const correct=getCorrect(s);
+
+  const progressHTML=stages.map((_,i)=>{
+    let cls=i<current?'done':i===current?'active':'';
+    return `<div class="progress-step ${cls}"></div>`;
+  }).join('');
+
+  const letters=['A','B','C','D'];
+  const choicesHTML=s.choices.map((c,i)=>{
+    let cls='';
+    if(answered){
+      if(i===correct)cls='correct';
+      else if(i===selectedIdx&&i!==correct)cls='wrong';
+    }
+    return `<button class="choice-btn ${cls}" onclick="pick(${i})" ${answered?'disabled':''}>
+      <span class="choice-letter">${letters[i]}</span>
+      <span>${c.text}</span>
+    </button>`;
+  }).join('');
+
+  const feedbackHTML=answered?(()=>{
+    const good=selectedIdx===correct;
+    return `<div class="feedback ${good?'good':'bad'}">
+      <span class="feedback-icon">${good?'✓':'✗'}</span>
+      <span><strong>${good?'Correct.':'Not quite.'}</strong> ${good?s.good:s.bad}</span>
+    </div>`;
+  })():'';
+
+  app.innerHTML=`
+    <div class="scene-bg">
+      <svg class="scene-svg" viewBox="0 0 700 180" preserveAspectRatio="xMidYMid slice">${SCENES[s.sceneIdx].svgScene}</svg>
+      <div class="scene-overlay"></div>
+      <div class="stage-pill">Stage ${current+1} / ${stages.length} — ${s.label}</div>
+      <div class="score-pill">${score} / ${stages.length}</div>
+    </div>
+    <div class="progress-bar">${progressHTML}</div>
+    <div class="content-area">
+      <div class="character-row">
+        <div class="avatar">
+          <svg viewBox="0 0 32 32" width="32" height="32" fill="none">
+            <circle cx="16" cy="12" r="6" fill="${PROSPECT.color}" opacity="0.9"/>
+            <ellipse cx="16" cy="26" rx="10" ry="6" fill="${PROSPECT.color}" opacity="0.7"/>
+          </svg>
+        </div>
+        <div class="bubble-wrap">
+          <div class="speaker-name">${PROSPECT.name} · ${s.context}</div>
+          <div class="bubble">${s.prospect}</div>
+        </div>
+      </div>
+      <div class="prompt">${s.prompt}</div>
+      <div class="choices">${choicesHTML}</div>
+      ${feedbackHTML}
+      ${answered?`<button class="next-btn" onclick="next()">${current<stages.length-1?'Continue →':'See results →'}</button>`:''}
+    </div>
+  `;
+}
+
+function pick(idx){
+  if(answered)return;
+  answered=true;selectedIdx=idx;
+  if(idx===getCorrect(stages[current]))score++;
+  render();
+}
+
+function next(){current++;answered=false;selectedIdx=null;render();}
+
+function renderResults(app){
+  const pct=Math.round((score/stages.length)*100);
+  let grade,gcolor,msg;
+  if(pct>=88){grade='Ready to run solo consultations';gcolor='#1D9E75';msg='You know the script, the objections, and the process. Time to close some deals.';}
+  else if(pct>=75){grade='Almost there';gcolor='#185FA5';msg='Strong foundation. Review the stages you missed and run it again before flying solo.';}
+  else if(pct>=50){grade='Needs more practice';gcolor='#BA7517';msg='Shadow a senior rep for a few consultations before going solo.';}
+  else{grade='Keep studying';gcolor='#E24B4A';msg="Read through the full consultation script and run this again. Don't run solo consultations yet.";}
+
+  app.innerHTML=`
+    <div class="scene-bg">
+      <svg class="scene-svg" viewBox="0 0 700 180" preserveAspectRatio="xMidYMid slice">
+        <rect width="100%" height="100%" fill="#0a0a1a"/>
+        <circle cx="50%" cy="50%" r="120" fill="#1D9E75" opacity="0.08"/>
+        <circle cx="50%" cy="50%" r="80" fill="#1D9E75" opacity="0.06"/>
+        <text x="50%" y="75" text-anchor="middle" fill="#1D9E75" font-size="11" font-family="sans-serif" letter-spacing="3" opacity="0.7">TRAINING COMPLETE</text>
+        <text x="50%" y="130" text-anchor="middle" fill="#1D9E75" font-size="52" font-family="sans-serif" font-weight="bold" opacity="0.12">${pct}%</text>
+      </svg>
+      <div class="scene-overlay"></div>
+      <div class="stage-pill">Final Score</div>
+      <div class="score-pill">${score} / ${stages.length} correct</div>
+    </div>
+    <div class="progress-bar">${stages.map(()=>`<div class="progress-step done"></div>`).join('')}</div>
+    <div class="results-wrap">
+      <div class="results-header">
+        <div class="results-score-big">${pct}%</div>
+        <div class="results-grade" style="color:${gcolor}">${grade}</div>
+        <div class="results-msg">${msg}</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-n" style="color:#1D9E75">${score}</div><div class="stat-l">Correct</div></div>
+        <div class="stat-box"><div class="stat-n" style="color:#E24B4A">${stages.length-score}</div><div class="stat-l">Missed</div></div>
+        <div class="stat-box"><div class="stat-n">${stages.length}</div><div class="stat-l">Stages</div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-outline" onclick="restart()">Try again</button>
+      </div>
+    </div>
+  `;
+}
+
+function restart(){current=0;score=0;answered=false;selectedIdx=null;render();}
+render();
+</script>
+</body>
+</html>
