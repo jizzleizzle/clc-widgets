@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLC Organizational Chart</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: transparent;
+  padding: 1.5rem 1rem 2rem;
+}
+.page-title {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+  opacity: 0.75;
+}
+.chart {
+  max-width: 1180px;
+  margin: 0 auto;
+  position: relative;
+}
+.svg-layer {
+  position: absolute;
+  top: 0; left: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.card {
+  border-radius: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  text-align: center;
+  display: inline-block;
+}
+.card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,0.3); }
+.card .name { font-weight: 700; font-size: 13px; line-height: 1.3; margin-bottom: 3px; }
+.card .title { font-size: 11px; line-height: 1.4; opacity: 0.9; }
+.card .badge {
+  display: inline-block; font-size: 9px; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 20px; margin-top: 5px;
+}
+.card.owner-bo  { background:#0d2a1a; color:#fff; border:2px solid #1D9E75; min-width:178px; }
+.card.owner-bo .badge { background:rgba(29,158,117,0.3); color:#5DCAA5; }
+.card.owner-tom { background:#1c1240; color:#fff; border:2px solid #7B61C4; min-width:178px; }
+.card.owner-tom .badge { background:rgba(123,97,196,0.3); color:#C4B0F0; }
+.card.cto { background:#3d0a1a; color:#fff; border:2px solid #C2185B; min-width:188px; }
+.card.cto .badge { background:rgba(194,24,91,0.25); color:#F48FB1; }
+.card.it { background:#3d0a1a; color:#fff; border:1.5px solid #C2185B; min-width:148px; }
+.card.it .badge { background:rgba(194,24,91,0.2); color:#F48FB1; }
+.card.sales-mgr { background:#0a2a18; color:#fff; border:1.5px solid #1D9E75; min-width:148px; }
+.card.sales-mgr .badge { background:rgba(29,158,117,0.25); color:#5DCAA5; }
+.card.ops-mgr { background:#0a1a2e; color:#fff; border:1.5px solid #4A90D9; min-width:148px; }
+.card.ops-mgr .badge { background:rgba(74,144,217,0.25); color:#7BB5E8; }
+.card.accounting-mgr { background:#2a1a00; color:#fff; border:1.5px solid #E0940A; min-width:148px; }
+.card.accounting-mgr .badge { background:rgba(224,148,10,0.25); color:#F5C84A; }
+.card.legal-card { background:#1c1240; color:#fff; border:1.5px solid #7B61C4; min-width:148px; }
+.card.legal-card .badge { background:rgba(123,97,196,0.25); color:#C4B0F0; }
+.card.team-sales { background:rgba(29,158,117,0.12); color:#fff; border:1px solid rgba(29,158,117,0.5); min-width:124px; padding:9px 11px; }
+.card.team-sales .name { font-size:12px; }
+.card.team-sales .title { font-size:10px; opacity:0.8; }
+.card.team-ops { background:rgba(74,144,217,0.12); color:#fff; border:1px solid rgba(74,144,217,0.5); min-width:124px; padding:9px 11px; }
+.card.team-ops .name { font-size:12px; }
+.card.team-ops .title { font-size:10px; opacity:0.8; }
+
+.tier1 { position:relative; /* height set by JS */ }
+.tier2 { display:flex; justify-content:center; }
+.tier3 { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.spacer { height:44px; }
+.col { display:flex; flex-direction:column; align-items:center; }
+
+.team-group {
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.12);
+  padding:10px; margin-top:10px;
+  background:rgba(0,0,0,0.15);
+}
+.group-label {
+  font-size:10px; font-weight:700;
+  letter-spacing:0.08em; text-transform:uppercase;
+  text-align:center; margin-bottom:8px;
+}
+.team-grid { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; }
+
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:200; align-items:center; justify-content:center; }
+.modal-overlay.active { display:flex; }
+.modal { background:#fff; border-radius:14px; padding:1.5rem; max-width:290px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.35); position:relative; }
+.modal-close { position:absolute; top:10px; right:14px; background:none; border:none; font-size:22px; color:#888; cursor:pointer; }
+.modal h2 { font-size:16px; color:#0d1b2a; margin-bottom:3px; }
+.modal .m-title { font-size:13px; color:#555; margin-bottom:10px; }
+.modal .m-dept { display:inline-block; font-size:10px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; padding:3px 10px; border-radius:20px; background:#EEF2F7; color:#4A6080; margin-bottom:12px; }
+.modal hr { border:none; border-top:1px solid #eee; margin:10px 0; }
+.modal .m-lbl { font-size:11px; color:#aaa; margin-bottom:2px; }
+.modal a { font-size:13px; color:#185FA5; text-decoration:none; }
+.modal a:hover { text-decoration:underline; }
+</style>
+</head>
+<body>
+
+<div class="page-title">Organizational Chart</div>
+
+<div class="chart" id="chart">
+  <svg class="svg-layer" id="svgLayer"></svg>
+
+  <!-- TIER 1: Bo and Tom — positioned by JS equidistant from Kate -->
+  <div class="tier1" id="tier1">
+    <div class="col" id="colBo" style="position:absolute;">
+      <div class="card owner-bo" id="cBo" onclick="show('Bo Thomas','Owner & Chief Executive Officer','Leadership','Bo@creditlawcenter.com')">
+        <div class="name">Bo Thomas</div>
+        <div class="title">Owner & Chief Executive Officer</div>
+        <div class="badge">Leadership</div>
+      </div>
+    </div>
+    <div class="col" id="colTom" style="position:absolute;">
+      <div class="card owner-tom" id="cTom" onclick="show('Tom Addleman','Owner & Managing Attorney','Legal','TomA@creditlawcenter.com')">
+        <div class="name">Tom Addleman</div>
+        <div class="title">Owner & Managing Attorney</div>
+        <div class="badge">Legal</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- TIER 2: Kate centered -->
+  <div class="tier2">
+    <div class="col">
+      <div class="card cto" id="cKate" onclick="show('Kate Campbell','Chief Technology Officer','IT Operations','KateC@creditlawcenter.com')">
+        <div class="name">Kate Campbell</div>
+        <div class="title">Chief Technology Officer</div>
+        <div class="badge">IT Operations</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- TIER 3 -->
+  <div class="tier3" id="tier3">
+
+    <div class="col">
+      <div class="card it" id="cJosh" onclick="show('Josh Bennett','Technical Program Manager','IT Operations','JoshB@creditlawcenter.com')">
+        <div class="name">Josh Bennett</div>
+        <div class="title">Technical Program Manager</div>
+        <div class="badge">IT Operations</div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card sales-mgr" id="cJohn" onclick="show('John McCall','Credit Advisor Manager','Sales','JohnM@creditlawcenter.com')">
+        <div class="name">John McCall</div>
+        <div class="title">Credit Advisor Manager</div>
+        <div class="badge">Sales</div>
+      </div>
+      <div class="team-group" style="border-color:rgba(29,158,117,0.35);">
+        <div class="group-label" style="color:#5DCAA5;">Sales Team</div>
+        <div class="team-grid">
+          <div class="card team-sales" onclick="show('Jason Diehl','Credit Advisor','Sales','JasonD@creditlawcenter.com')"><div class="name">Jason Diehl</div><div class="title">Credit Advisor</div></div>
+          <div class="card team-sales" onclick="show('Jessica Rovenstine','Credit Advisor','Sales','JessicaR@creditlawcenter.com')"><div class="name">Jessica Rovenstine</div><div class="title">Credit Advisor</div></div>
+          <div class="card team-sales" onclick="show('Kim Stone','Credit Advisor','Sales','KimS@creditlawcenter.com')"><div class="name">Kim Stone</div><div class="title">Credit Advisor</div></div>
+          <div class="card team-sales" onclick="show('Lesley Soucie','Credit Advisor','Sales','LesleyS@creditlawcenter.com')"><div class="name">Lesley Soucie</div><div class="title">Credit Advisor</div></div>
+          <div class="card team-sales" onclick="show('Rachel Trent','Credit Advisor','Sales','RachelT@creditlawcenter.com')"><div class="name">Rachel Trent</div><div class="title">Credit Advisor</div></div>
+          <div class="card team-sales" onclick="show('Russell Keller','St. Louis Account Executive','Sales','RussellK@creditlawcenter.com')"><div class="name">Russell Keller</div><div class="title">St. Louis Account Executive</div></div>
+          <div class="card team-sales" onclick="show('Shelly Rex','Credit Advisor','Sales','ShellyR@creditlawcenter.com')"><div class="name">Shelly Rex</div><div class="title">Credit Advisor</div></div>
+          <div class="card team-sales" onclick="show('Tracy Sisney','Credit Advisor','Sales','TracyS@creditlawcenter.com')"><div class="name">Tracy Sisney</div><div class="title">Credit Advisor</div></div>
+          <div class="card team-sales" onclick="show('Vanessa King','Credit Advisor','Sales','VanessaK@creditlawcenter.com')"><div class="name">Vanessa King</div><div class="title">Credit Advisor</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card ops-mgr" id="cCara" onclick="show('Cara James','Operations Manager','Operations','CaraJ@creditlawcenter.com')">
+        <div class="name">Cara James</div>
+        <div class="title">Operations Manager</div>
+        <div class="badge">Operations</div>
+      </div>
+      <div class="team-group" style="border-color:rgba(74,144,217,0.35);">
+        <div class="group-label" style="color:#7BB5E8;">Operations Team</div>
+        <div class="team-grid">
+          <div class="card team-ops" onclick="show('Kelli VunCannon','Paralegal / Processor','Operations','KelliV@creditlawcenter.com')"><div class="name">Kelli VunCannon</div><div class="title">Paralegal / Processor</div></div>
+          <div class="card team-ops" onclick="show('Ryan Christian','Paralegal / Processor','Operations','RyanC@creditlawcenter.com')"><div class="name">Ryan Christian</div><div class="title">Paralegal / Processor</div></div>
+          <div class="card team-ops" onclick="show('Brendan Fox','Parcel Specialist','Operations','BrendanF@creditlawcenter.com')"><div class="name">Brendan Fox</div><div class="title">Parcel Specialist</div></div>
+          <div class="card team-ops" onclick="show('Tara Barnes','Client Care Specialist','Operations','TaraB@creditlawcenter.com')"><div class="name">Tara Barnes</div><div class="title">Client Care Specialist</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card accounting-mgr" id="cCarolyn" onclick="show('Carolyn DeWitt','Controller','Accounting','CarolynD@creditlawcenter.com')">
+        <div class="name">Carolyn DeWitt</div>
+        <div class="title">Controller</div>
+        <div class="badge">Accounting</div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card legal-card" id="cMadison" onclick="show('Madison Dale','Paralegal','Legal','MadisonD@creditlawcenter.com')">
+        <div class="name">Madison Dale</div>
+        <div class="title">Paralegal</div>
+        <div class="badge">Legal</div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card legal-card" id="cAndrew" onclick="show('Andrew M. Esselman','Senior Associate Attorney','Legal','AndrewE@creditlawcenter.com')">
+        <div class="name">Andrew M. Esselman</div>
+        <div class="title">Senior Associate Attorney</div>
+        <div class="badge">Legal</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="overlay" onclick="closeOverlay(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="hide()">×</button>
+    <h2 id="mName"></h2>
+    <div class="m-title" id="mTitle"></div>
+    <div class="m-dept" id="mDept"></div>
+    <hr>
+    <div class="m-lbl">Email</div>
+    <a id="mEmail" href="#"></a>
+  </div>
+</div>
+
+<script>
+function show(name, title, dept, email) {
+  document.getElementById('mName').textContent = name;
+  document.getElementById('mTitle').textContent = title;
+  document.getElementById('mDept').textContent = dept;
+  document.getElementById('mEmail').textContent = email;
+  document.getElementById('mEmail').href = 'mailto:' + email;
+  document.getElementById('overlay').classList.add('active');
+}
+function hide() { document.getElementById('overlay').classList.remove('active'); }
+function closeOverlay(e) { if (e.target === document.getElementById('overlay')) hide(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
+
+function r(id) {
+  const el = document.getElementById(id);
+  const cr = document.getElementById('chart').getBoundingClientRect();
+  const er = el.getBoundingClientRect();
+  return {
+    x:      er.left - cr.left + er.width / 2,
+    top:    er.top  - cr.top,
+    bottom: er.top  - cr.top + er.height,
+    left:   er.left - cr.left,
+    w:      er.width,
+    h:      er.height
+  };
+}
+
+function seg(svg, x1, y1, x2, y2, color, w) {
+  const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+  l.setAttribute('x1',x1); l.setAttribute('y1',y1);
+  l.setAttribute('x2',x2); l.setAttribute('y2',y2);
+  l.setAttribute('stroke', color);
+  l.setAttribute('stroke-width', w || 2);
+  svg.appendChild(l);
+}
+
+function positionTier1() {
+  const chart   = document.getElementById('chart');
+  const colBo   = document.getElementById('colBo');
+  const colTom  = document.getElementById('colTom');
+  const tier1   = document.getElementById('tier1');
+  const cBo     = document.getElementById('cBo');
+  const cTom    = document.getElementById('cTom');
+  const cKate   = document.getElementById('cKate');
+
+  const cr      = chart.getBoundingClientRect();
+  const kateR   = cKate.getBoundingClientRect();
+  const kateCX   = kateR.left - cr.left + kateR.width / 2;
+  const andrewEl = document.getElementById('cAndrew');
+  const andrewR  = andrewEl.getBoundingClientRect();
+  const andrewCX = andrewR.left - cr.left + andrewR.width / 2;
+
+  // Bo: equidistant left of Kate (mirror of Andrew's distance from Kate)
+  const tomOffset = andrewCX - kateCX;
+  const boW     = cBo.offsetWidth;
+  const tomW    = cTom.offsetWidth;
+  const boH     = cBo.offsetHeight;
+
+  colBo.style.left  = (kateCX - tomOffset - boW / 2) + 'px';
+  colBo.style.top   = '0px';
+  // Tom: directly above Andrew
+  colTom.style.left = (andrewCX - tomW / 2) + 'px';
+  colTom.style.top  = '0px';
+
+  tier1.style.height = boH + 'px';
+}
+
+function drawConnectors() {
+  const svg = document.getElementById('svgLayer');
+  svg.innerHTML = '';
+  const chart = document.getElementById('chart');
+  svg.setAttribute('width',  chart.offsetWidth);
+  svg.setAttribute('height', chart.offsetHeight);
+
+  const bo      = r('cBo');
+  const tom     = r('cTom');
+  const kate    = r('cKate');
+  const josh    = r('cJosh');
+  const john    = r('cJohn');
+  const cara    = r('cCara');
+  const carolyn = r('cCarolyn');
+  const madison = r('cMadison');
+  const andrew  = r('cAndrew');
+
+  const green  = '#1D9E75';
+  const purple = '#7B61C4';
+  const maroon = '#C2185B';
+
+  // Bo → Kate: elbow down from Bo, across to Kate, down to Kate top
+  seg(svg, bo.x, bo.bottom, bo.x, kate.top - 14, green, 2);
+  seg(svg, bo.x, kate.top - 14, kate.x, kate.top - 14, green, 2);
+  seg(svg, kate.x, kate.top - 14, kate.x, kate.top, green, 2);
+
+  // Tom → Kate: elbow down from Tom, left across to Kate, down to Kate top
+  seg(svg, tom.x, tom.bottom, tom.x, kate.top - 28, purple, 2);
+  seg(svg, tom.x, kate.top - 28, kate.x, kate.top - 28, purple, 2);
+  seg(svg, kate.x, kate.top - 28, kate.x, kate.top, purple, 2);
+
+  // Tom → Andrew: straight vertical (Tom is positioned directly above Andrew)
+  seg(svg, andrew.x, tom.bottom, andrew.x, andrew.top, purple, 2);
+
+  // Kate → 5 direct reports via horizontal bus
+  const busY   = kate.bottom + 22;
+  const leftX  = Math.min(josh.x, john.x, cara.x, carolyn.x, madison.x);
+  const rightX = Math.max(josh.x, john.x, cara.x, carolyn.x, madison.x);
+
+  seg(svg, kate.x, kate.bottom, kate.x, busY, maroon, 2);
+  seg(svg, leftX, busY, rightX, busY, maroon, 2);
+  [josh, john, cara, carolyn, madison].forEach(c => {
+    seg(svg, c.x, busY, c.x, c.top, maroon, 2);
+  });
+}
+
+function init() {
+  positionTier1();
+  setTimeout(() => {
+    positionTier1();
+    drawConnectors();
+  }, 120);
+}
+
+window.addEventListener('load', init);
+window.addEventListener('resize', () => {
+  positionTier1();
+  setTimeout(drawConnectors, 60);
+});
+</script>
+</body>
+</html>
